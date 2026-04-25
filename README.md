@@ -1,31 +1,130 @@
-# Laboratorio 2: Implementación de Seguridad Móvil en Flutter
+# Post-Contenido 2 - Seguridad Móvil
 
-## Introducción
-Este proyecto implementa controles de seguridad críticos para aplicaciones financieras, enfocándose en la protección de las comunicaciones y el almacenamiento seguro de credenciales.
+## Implementación de Certificate Pinning en Flutter
 
-## Objetivos
-1. Implementar Certificate Pinning para prevenir ataques Man-in-the-Middle (MitM).
-2. Asegurar el almacenamiento de tokens de sesión utilizando Hardware-backed storage.
-3. Centralizar el manejo de excepciones de seguridad en la capa de red.
+## Descripción
 
-## Arquitectura de Seguridad
-El proyecto utiliza una estructura por capas para separar la lógica de negocio de la infraestructura de red:
+En este laboratorio se desarrolló una aplicación móvil en Flutter que implementa certificate pinning para asegurar la comunicación HTTPS. Se utilizó la librería Dio junto con un SecurityContext personalizado que permite validar únicamente un certificado específico, evitando conexiones con servidores no confiables.
 
-- **lib/network/api_client.dart**: Configuración de Dio y SecurityContext para la validación estricta de certificados.
-- **lib/network/token_interceptor.dart**: Interceptor para la gestión automatizada de cabeceras de autorización.
-- **lib/network/security_error_handler.dart**: Traductor de excepciones técnicas a mensajes de usuario seguros.
-- **lib/network/flutter_secure_storage**: Integración con Keychain (iOS) y Keystore (Android).
+El proyecto simula un entorno de aplicación bancaria donde la seguridad en la comunicación es un aspecto crítico.
 
-## Requisitos Previos
-- Flutter SDK >= 3.10.0
-- Certificado del servidor en formato PEM en `assets/certs/server_cert.pem`.
+## Objetivo del laboratorio
 
-## Instalación
-1. Clonar el repositorio.
-2. Ejecutar `flutter pub get`.
-3. Configurar el host local o mock server para `api.bancasegura.test`.
+Implementar mecanismos de seguridad en la capa de red mediante:
 
-## Pruebas de Seguridad (Checkpoints)
-1. **Checkpoint 1 (Conexión Exitosa)**: Se valida que el cliente acepta conexiones únicamente cuando el certificado coincide con el pin local.
-2. **Checkpoint 2 (Error de Certificado)**: Se verifica que el HandshakeException es capturado y notificado correctamente al usuario cuando el certificado es inválido o expirado.
-3. **Checkpoint 3 (Header Authorization)**: Validación en logs de la inclusión correcta del Bearer token en cada petición saliente.
+* Validación de certificados (certificate pinning)
+* Manejo de errores TLS
+* Almacenamiento seguro de credenciales
+* Inclusión de headers de autenticación
+
+## Tecnologías utilizadas
+
+* Flutter
+* Dart
+* Dio
+* flutter_secure_storage
+* OpenSSL
+
+## Configuración del proyecto
+
+### Instalación de dependencias
+
+```text
+flutter pub get
+```
+
+### Ejecución
+
+```text
+flutter run
+```
+
+## Configuración de seguridad
+
+Se generó un certificado autofirmado para pruebas utilizando OpenSSL:
+
+```text
+openssl req -x509 -newkey rsa:2048 -keyout assets/certs/server_key.pem -out assets/certs/server_cert.pem -days 365 -nodes -subj "/CN=api.bancasegura.test/O=BancaSegura/C=CO"
+```
+
+El certificado utilizado por la aplicación es:
+
+```text
+assets/certs/server_cert.pem
+```
+
+La clave privada no se incluye en el repositorio.
+
+## Implementación
+
+### 1. Certificate Pinning
+
+Se configuró un SecurityContext sin certificados de confianza por defecto, cargando únicamente el certificado definido en el proyecto.
+
+### 2. Cliente HTTP
+
+Se utilizó Dio con un adaptador personalizado para integrar el contexto de seguridad y validar el certificado del servidor.
+
+### 3. Manejo de errores
+
+Se implementó un manejador que detecta errores de tipo HandshakeException y muestra mensajes comprensibles al usuario.
+
+### 4. Almacenamiento seguro
+
+Se utilizó flutter_secure_storage para guardar el token de autenticación.
+
+### 5. Interceptor de red
+
+Se implementó un interceptor que agrega automáticamente el header Authorization en cada solicitud.
+
+## Evidencias
+
+Las evidencias del laboratorio se encuentran en la carpeta:
+
+```text
+/evidencias
+```
+
+### Checkpoint 1: Conexión segura
+
+Se evidencia una conexión exitosa con el certificado válido (respuesta HTTP 200).
+
+### Checkpoint 2: Rechazo de certificado
+
+Se muestra el rechazo de una conexión con certificado inválido, generando un error de tipo HandshakeException.
+
+### Checkpoint 3: Header de autorización
+
+Se evidencia la inclusión del header Authorization en las solicitudes HTTP.
+
+## Estructura del proyecto
+
+```text
+lib/
+ ├── network/
+ │    ├── api_client.dart
+ │    ├── security_error_handler.dart
+ │    └── token_interceptor.dart
+ ├── screens/
+ │    └── home_screen.dart
+ └── main.dart
+
+assets/
+ └── certs/
+      └── server_cert.pem
+
+evidencias/
+```
+
+## Consideraciones de seguridad
+
+* No se incluyen claves privadas en el repositorio
+* Se valida estrictamente el certificado del servidor
+* Se evita el uso de conexiones inseguras
+* Se protege la información sensible del usuario
+
+## Control de versiones
+
+El repositorio incluye commits descriptivos en modo imperativo, cumpliendo con los requisitos del laboratorio.
+
+
